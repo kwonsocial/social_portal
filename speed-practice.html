@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>사회 개념 스피드 퀴즈 · 단원 연습</title>
+<style>
+  :root{
+    --board:#1f3a30; --board2:#173027; --frame:#6b4a2f; --chalk:#f4f1e8; --chalk2:#c9d3c8;
+    --yellow:#f5d76e; --pink:#f2a7a0; --blue:#9fd0f0; --green:#a8e0a0; --muted:#8fa79a;
+    --sans:"Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:var(--sans);color:var(--chalk);background:#2a1d12;overflow:hidden;word-break:keep-all;-webkit-user-select:none;user-select:none}
+  .board{position:fixed;inset:0;border:14px solid var(--frame);border-radius:6px;
+    background:
+      radial-gradient(1200px 700px at 30% 20%, rgba(255,255,255,.05), transparent 60%),
+      radial-gradient(900px 600px at 80% 90%, rgba(255,255,255,.035), transparent 60%),
+      linear-gradient(var(--board),var(--board2));
+    box-shadow:inset 0 0 80px rgba(0,0,0,.45);display:flex;flex-direction:column}
+  .screen{position:absolute;inset:0;display:flex;flex-direction:column;padding:2.2vh 3vw}
+  .screen[hidden]{display:none}
+  button{font:inherit;cursor:pointer;border:2px solid rgba(244,241,232,.55);background:rgba(255,255,255,.06);color:var(--chalk);
+    border-radius:14px;padding:.6em 1.1em;font-weight:700}
+  button:hover{background:rgba(255,255,255,.12)}
+  button:active{transform:scale(.97)}
+  .muted{color:var(--muted)}
+
+  /* ===== 시작 화면 ===== */
+  #home{align-items:center;justify-content:center;gap:3.2vh;text-align:center}
+  #home h1{font-size:clamp(34px,5.4vw,84px);letter-spacing:-.01em;font-weight:800;text-shadow:0 0 1px rgba(255,255,255,.6)}
+  #home h1 span{color:var(--yellow)}
+  #home .sub{font-size:clamp(16px,1.6vw,26px);color:var(--chalk2)}
+  .sets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1.2vw;width:min(1300px,92vw)}
+  .sets button{padding:1.6vh .8vw;font-size:clamp(18px,2vw,32px);border-style:dashed;display:flex;flex-direction:column;align-items:center;gap:.3em}
+  .sets button small{font-size:.45em;font-weight:500;color:var(--chalk2)}
+  .homebar{display:flex;gap:1vw;flex-wrap:wrap;justify-content:center;font-size:clamp(14px,1.2vw,20px)}
+  .opt{display:flex;align-items:center;gap:.5em;border:2px solid rgba(244,241,232,.3);border-radius:12px;padding:.45em .9em}
+  .opt select,.opt input{font:inherit;background:var(--board2);color:var(--chalk);border:1px solid rgba(244,241,232,.4);border-radius:8px;padding:.15em .4em}
+  .opt input[type=checkbox]{width:1.2em;height:1.2em;accent-color:var(--yellow)}
+
+  /* ===== 진행 화면 ===== */
+  .top{display:flex;justify-content:space-between;align-items:center;font-size:clamp(16px,1.7vw,28px);gap:2vw}
+  .top b{color:var(--yellow)}
+  #who.flash{animation:flash 1s ease}
+  @keyframes flash{0%{color:var(--pink);transform:scale(1.35)}100%{transform:scale(1)}}
+  #who{display:inline-block}
+  #total.warn{color:var(--pink);border-color:var(--pink)}
+  .pill{border:2px solid rgba(244,241,232,.45);border-radius:999px;padding:.2em .9em}
+  .stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3vh;text-align:center;padding:0 2vw}
+  .unit{font-size:clamp(16px,1.6vw,28px);color:var(--blue);letter-spacing:.04em}
+  .q{font-size:clamp(30px,4.3vw,76px);line-height:1.38;font-weight:700;max-width:24em;text-wrap:balance}
+  .big{font-size:clamp(56px,11vw,200px);font-weight:900;line-height:1}
+  .term{font-size:clamp(48px,7.5vw,140px);font-weight:900;color:var(--yellow);line-height:1.1}
+  .alias{font-size:clamp(18px,2vw,32px);color:var(--chalk2)}
+  .stamp{font-size:clamp(24px,3vw,52px);font-weight:900;letter-spacing:.1em}
+  .ok{color:var(--green)} .bad{color:var(--pink)}
+  .timer{display:flex;align-items:center;gap:1.4vw;width:100%}
+  .bar{flex:1;height:clamp(14px,1.8vh,24px);border-radius:999px;background:rgba(255,255,255,.1);overflow:hidden;border:2px solid rgba(244,241,232,.35)}
+  .bar i{display:block;height:100%;width:100%;background:var(--chalk);border-radius:999px;transform-origin:left center}
+  .sec{font-size:clamp(44px,5.6vw,96px);font-weight:900;min-width:2ch;text-align:right;font-variant-numeric:tabular-nums}
+  .warn .bar i{background:var(--pink)} .warn .sec{color:var(--pink)}
+  .controls{display:flex;gap:1.2vw;justify-content:center;flex-wrap:wrap;padding-top:1.6vh}
+  .controls button{font-size:clamp(18px,1.9vw,32px);min-width:9em;padding:.55em 1em}
+  .controls .main{border-color:var(--green);color:var(--green)}
+  .controls .pass{border-color:var(--pink);color:var(--pink)}
+  .keys{text-align:center;font-size:clamp(12px,1vw,16px);color:var(--muted);padding-top:.8vh}
+
+  /* ===== 일시정지 ===== */
+  #pauseLayer{position:absolute;inset:0;background:rgba(10,20,16,.82);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3vh;z-index:5}
+  #pauseLayer[hidden]{display:none}
+  #pauseLayer h2{font-size:clamp(40px,6vw,100px)}
+  #pauseLayer .row{display:flex;gap:1.2vw}
+  #pauseLayer button{font-size:clamp(18px,1.8vw,30px)}
+
+  /* ===== 결과 ===== */
+  #end{align-items:center;gap:2vh}
+  #end h2{font-size:clamp(28px,3.6vw,60px);margin-top:1vh}
+  .score{font-size:clamp(60px,9vw,160px);font-weight:900;color:var(--yellow);line-height:1}
+  .review{flex:1;overflow:auto;width:min(1200px,92vw);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1vh 2vw;align-content:start;font-size:clamp(15px,1.25vw,22px);line-height:1.45;padding-right:.5vw}
+  .review div{border-bottom:1px dashed rgba(244,241,232,.3);padding:.5em 0}
+  .review b{color:var(--yellow);margin-right:.4em}
+  .endbtns{display:flex;gap:1vw;padding-bottom:1vh}
+  .endbtns button{font-size:clamp(16px,1.5vw,26px)}
+
+  /* ===== 교사용 목록 ===== */
+  #list{background:#fff;color:#111;overflow:auto;padding:24px 32px}
+  #list .bar2{display:flex;gap:10px;align-items:center;margin-bottom:14px}
+  #list button{color:#111;border-color:#999;background:#f3f3f3}
+  #list h2{font-size:22px}
+  .lgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+  .lset h3{font-size:16px;border-bottom:2px solid #333;padding-bottom:4px;margin-bottom:4px}
+  .lset ol{padding-left:1.6em;font-size:13px;line-height:1.55}
+  .lset li span{color:#666;font-size:11px;margin-left:.3em}
+  @media print{
+    body{background:#fff;overflow:visible} .board{position:static;border:0;box-shadow:none;background:#fff}
+    .screen:not(#list){display:none!important} #list{position:static;padding:0} #list .bar2{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="board">
+
+  <!-- 시작 -->
+  <section class="screen" id="home">
+    <h1>사회 개념 <span>스피드 퀴즈</span></h1>
+    <div class="sub">단원 연습 · 설명을 읽고 개념을 말해요 · 제한 시간 2분 · 사회①·② 12개 단원 150개</div>
+    <div class="sets" id="setBtns"></div>
+    <div class="homebar">
+      <label class="opt">제한 시간
+        <select id="optTime"><option>5</option><option>7</option><option selected>10</option><option>15</option><option>20</option></select>초</label>
+      <label class="opt">전체 시간
+        <select id="optTotal"><option value="60">1분</option><option value="120" selected>2분</option><option value="180">3분</option><option value="300">5분</option><option value="0">제한 없음</option></select></label>
+      <label class="opt"><input type="checkbox" id="optUnit" checked> 단원 표시</label>
+      <label class="opt"><input type="checkbox" id="optShuffle"> 순서 섞기 <span class="muted">(정답 리스트와 순서 달라짐)</span></label>
+      <label class="opt"><input type="checkbox" id="optSound" checked> 소리</label>
+      <button id="fsBtn">전체 화면</button>
+      <button id="listBtn">교사용 목록</button>
+      <button id="dlBtn">정답 리스트 받기</button>
+    </div>
+  </section>
+
+  <!-- 진행 -->
+  <section class="screen" id="play" hidden>
+    <div class="top">
+      <span class="pill" id="setLabel">단원</span>
+      <span>문제 <b id="qNo">1</b> / <span id="qTotal">25</span></span>
+      <span class="pill" id="total">전체 2:00</span>
+      <span id="who"><b>1</b>번째 학생</span>
+      <span>맞힘 <b id="okCount">0</b></span>
+    </div>
+
+    <div class="stage" id="stage"></div>
+
+    <div class="timer" id="timerBox">
+      <div class="bar"><i id="barFill"></i></div>
+      <div class="sec" id="sec">10</div>
+    </div>
+    <div class="controls">
+      <button class="main" id="okBtn">○ 정답</button>
+      <button class="pass" id="passBtn">패스</button>
+      <button id="pauseBtn">일시정지</button>
+    </div>
+    <div class="keys">스페이스·Enter: 정답 &nbsp;·&nbsp; P 또는 →: 패스 &nbsp;·&nbsp; Esc: 일시정지</div>
+
+    <div id="pauseLayer" hidden>
+      <h2>잠깐 멈춤</h2>
+      <div class="row">
+        <button id="resumeBtn">계속하기</button>
+        <button id="quitBtn">처음 화면으로</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 결과 -->
+  <section class="screen" id="end" hidden>
+    <h2 id="endTitle">끝!</h2>
+    <div class="score" id="endScore">0 / 25</div>
+    <div class="muted" id="endSub">다시 볼 개념</div>
+    <div class="review" id="review"></div>
+    <div class="endbtns">
+      <button id="againBtn">같은 단원 다시</button>
+      <button id="homeBtn">다른 단원 고르기</button>
+    </div>
+  </section>
+
+  <!-- 교사용 목록 -->
+  <section class="screen" id="list" hidden>
+    <div class="bar2"><button id="listBack">← 돌아가기</button><button id="printBtn">인쇄</button><button id="dlBtn2">정답 리스트 받기(엑셀용)</button><h2>교사용 목록 · 12개 단원</h2></div>
+    <div class="lgrid" id="lgrid"></div>
+  </section>
+</div>
+
+<script>
+/* 출처: 사회 개념 복원실(비상교육 사회①·② 11개 단원) 개념 150개. */
+const SETS = [[{"t":"기후","a":[],"d":"한 지역에서 여러 해에 걸쳐 반복적으로 나타나는 평균적인 대기 상태.","od":"한 지역에서 여러 해에 걸쳐 반복적으로 나타나는 평균적인 대기 상태.","u":"사회① 2단원","ut":"우리와 다른 기후, 다른 생활","p":29},{"t":"날씨","a":[],"d":"짧은 시간 동안 나타나는 대기의 상태.","od":"짧은 시간 동안 나타나는 대기의 상태.","u":"사회① 2단원","ut":"우리와 다른 기후, 다른 생활","p":29},{"t":"열대 기후","a":[],"d":"적도 주변에 주로 분포하며 가장 추운 달의 평균 기온이 18℃ 이상인 기후.","od":"적도 주변에 주로 분포하며 가장 추운 달의 평균 기온이 18℃ 이상인 기후.","u":"사회① 2단원","ut":"우리와 다른 기후, 다른 생활","p":30},{"t":"온대 기후","a":[],"d":"중위도 지역을 중심으로 분포하며 가장 추운 달의 평균 기온이 -3~18℃인 기후.","od":"중위도 지역을 중심으로 분포하며 가장 추운 달의 평균 기온이 -3~18℃인 기후.","u":"사회① 2단원","ut":"우리와 다른 기후, 다른 생활","p":31},{"t":"냉대 기후","a":[],"d":"가장 추운 달은 평균 -3℃ 미만, 가장 더운 달은 평균 10℃ 이상이며 겨울이 길고 추운 기후.","od":"가장 추운 달은 평균 -3℃ 미만, 가장 더운 달은 평균 10℃ 이상이며 겨울이 길고 추운 기후.","u":"사회① 2단원","ut":"우리와 다른 기후, 다른 생활","p":31},{"t":"한대 기후","a":[],"d":"가장 더운 달의 평균 기온도 10℃ 미만이어서 나무가 자라기 어려운 기후.","od":"가장 더운 달의 평균 기온도 10℃ 미만이어서 나무가 자라기 어려운 기후.","u":"사회① 2단원","ut":"우리와 다른 기후, 다른 생활","p":31},{"t":"스콜","a":[],"d":"열대 우림 기후 지역에서 거의 매일 오후에 짧은 시간 동안 집중적으로 쏟아지는 열대성 소나기.","od":"열대 우림 기후 지역에서 거의 매일 오후에 짧은 시간 동안 집중적으로 쏟아지는 열대성 소나기.","u":"사회① 2단원","ut":"우리와 다른 기후, 다른 생활","p":35},{"t":"플랜테이션","a":[],"d":"선진국의 자본과 기술에 원주민의 노동력을 결합하여 상품 작물을 대규모로 재배하는 농업.","od":"선진국의 자본과 기술에 원주민의 노동력을 결합하여 상품 작물을 대규모로 재배하는 농업.","u":"사회① 2단원","ut":"우리와 다른 기후, 다른 생활","p":36},{"t":"온대 계절풍 기후","a":[],"d":"온대 기후 중 하나로, 계절풍의 영향을 받아 여름은 덥고 비가 많이 내리며 겨울은 춥고 건조한 기후.","od":"온대 기후 중 하나로, 계절풍의 영향을 받아 여름은 덥고 비가 많이 내리며 겨울은 춥고 건조한 기후.","u":"사회① 2단원","ut":"우리와 다른 기후, 다른 생활","p":39},{"t":"서안 해양성 기후","a":[],"d":"바다와 편서풍의 영향으로 연교차가 작고 비가 연중 비교적 고르게 내리는 기후.","od":"바다와 편서풍의 영향으로 연교차가 작고 비가 연중 비교적 고르게 내리는 기후.","u":"사회① 2단원","ut":"우리와 다른 기후, 다른 생활","p":39},{"t":"지중해성 기후","a":[],"d":"여름은 덥고 건조하며 겨울은 비교적 온화하고 비가 내리는 기후.","od":"여름은 덥고 건조하며 겨울은 비교적 온화하고 비가 내리는 기후.","u":"사회① 2단원","ut":"우리와 다른 기후, 다른 생활","p":39},{"t":"툰드라 기후","a":[],"d":"추운 날이 오래 이어지고 짧은 여름에 지표가 녹아 이끼나 풀이 자라는 한대 기후.","od":"추운 날이 오래 이어지고 짧은 여름에 지표가 녹아 이끼나 풀이 자라는 한대 기후.","u":"사회① 2단원","ut":"우리와 다른 기후, 다른 생활","p":46},{"t":"영구 동토층","a":[],"d":"땅속이 일 년 내내 얼어 있는 층.","od":"땅속이 일 년 내내 얼어 있는 층.","u":"사회① 2단원","ut":"우리와 다른 기후, 다른 생활","p":46}],[{"t":"문화의 보편성","a":[],"d":"의식주나 인사처럼 여러 사회에서 공통으로 나타나는 문화 현상이 있다는 성격.","od":"의식주나 인사처럼 여러 사회에서 공통으로 나타나는 문화 현상이 있다는 성격.","u":"사회① 8단원","ut":"문화의 이해","p":151},{"t":"문화의 다양성","a":[],"d":"자연환경과 사회적 상황이 달라 사회마다 문화의 모습이 다르게 나타나는 성격.","od":"자연환경과 사회적 상황이 달라 사회마다 문화의 모습이 다르게 나타나는 성격.","u":"사회① 8단원","ut":"문화의 이해","p":151},{"t":"문화의 공유성","a":["공유성"],"d":"한 사회의 구성원들이 공통된 사고방식과 행동 방식을 가지는 특징.","od":"한 사회의 구성원들이 공통된 사고방식과 행동 방식을 가지는 특징.","u":"사회① 8단원","ut":"문화의 이해","p":152},{"t":"문화의 학습성","a":["학습성"],"d":"태어난 뒤 사회생활을 하면서 문화를 배워 익힌다는 특징.","od":"태어난 뒤 사회생활을 하면서 문화를 배워 익힌다는 특징.","u":"사회① 8단원","ut":"문화의 이해","p":152},{"t":"문화의 축적성","a":["축적성"],"d":"이전 세대의 문화에 새로운 지식과 기술이 더해져 내용이 풍부해지는 특징.","od":"이전 세대의 문화에 새로운 지식과 기술이 더해져 내용이 풍부해지는 특징.","u":"사회① 8단원","ut":"문화의 이해","p":152},{"t":"문화의 변동성","a":["변동성"],"d":"문화의 모습이 시간의 흐름과 함께 계속 달라진다는 특징.","od":"문화의 모습이 시간의 흐름과 함께 계속 달라진다는 특징.","u":"사회① 8단원","ut":"문화의 이해","p":152},{"t":"문화의 전체성","a":["전체성","총체성","문화의 총체성"],"d":"문화의 여러 부분이 연결되어 한 부분의 변화가 다른 부분에도 영향을 주는 특징.","od":"문화의 여러 부분이 연결되어 한 부분의 변화가 다른 부분에도 영향을 주는 특징.","u":"사회① 8단원","ut":"문화의 이해","p":152},{"t":"자문화 중심주의","a":[],"d":"자기 문화를 우수하다고 보고 다른 사회의 문화를 부정적으로 평가하는 태도.","od":"자기 문화를 우수하다고 보고 다른 사회의 문화를 부정적으로 평가하는 태도.","u":"사회① 8단원","ut":"문화의 이해","p":155},{"t":"문화 사대주의","a":[],"d":"다른 사회의 문화를 우수하다고 믿고 동경하면서 자기 문화를 열등하다고 여기는 태도.","od":"다른 사회의 문화를 우수하다고 믿고 동경하면서 자기 문화를 열등하다고 여기는 태도.","u":"사회① 8단원","ut":"문화의 이해","p":155},{"t":"문화 상대주의","a":[],"d":"문화가 생겨난 환경과 사회적 맥락을 고려하여 그 의미를 이해하는 태도.","od":"문화가 생겨난 환경과 사회적 맥락을 고려하여 그 의미를 이해하는 태도.","u":"사회① 8단원","ut":"문화의 이해","p":156}],[{"t":"정치","a":[],"d":"좁게는 국가 권력을 얻고 행사하는 활동, 넓게는 대립과 갈등을 조정하여 합의를 이루는 과정.","od":"좁게는 국가 권력을 얻고 행사하는 활동, 넓게는 대립과 갈등을 조정하여 합의를 이루는 과정.","u":"사회① 9단원","ut":"정치 생활과 민주주의","p":167},{"t":"민주주의","a":[],"d":"다수의 국민이 나라를 다스리는 정치 형태이며, 일상의 문제를 민주적으로 해결하려는 생활 양식.","od":"다수의 국민이 나라를 다스리는 정치 형태이며, 일상의 문제를 민주적으로 해결하려는 생활 양식.","u":"사회① 9단원","ut":"정치 생활과 민주주의","p":173},{"t":"인간의 존엄성","a":[],"d":"모든 사람이 인간이라는 이유만으로 존중받을 가치를 가진다는 생각.","od":"모든 사람이 인간이라는 이유만으로 존중받을 가치를 가진다는 생각.","u":"사회① 9단원","ut":"정치 생활과 민주주의","p":173},{"t":"자유","a":[],"d":"국가나 다른 사람의 부당한 구속 없이 스스로 판단하고 행동할 수 있는 상태.","od":"국가나 다른 사람의 부당한 구속 없이 스스로 판단하고 행동할 수 있는 상태.","u":"사회① 9단원","ut":"정치 생활과 민주주의","p":173},{"t":"평등","a":[],"d":"성별·인종·재산·신분 등을 이유로 부당한 차별을 받지 않고 동등하게 대우받는 것.","od":"성별·인종·재산·신분 등을 이유로 부당한 차별을 받지 않고 동등하게 대우받는 것.","u":"사회① 9단원","ut":"정치 생활과 민주주의","p":173},{"t":"국민 주권의 원리","a":[],"d":"국가의 의사를 결정하는 최고의 권력인 주권이 국민에게 있다는 원리.","od":"국가의 의사를 결정하는 최고의 권력인 주권이 국민에게 있다는 원리.","u":"사회① 9단원","ut":"정치 생활과 민주주의","p":174},{"t":"국민 자치의 원리","a":[],"d":"주권자인 국민이 스스로 나라를 다스려야 한다는 원리.","od":"주권자인 국민이 스스로 나라를 다스려야 한다는 원리.","u":"사회① 9단원","ut":"정치 생활과 민주주의","p":174},{"t":"입헌주의 원리","a":["입헌주의의 원리","입헌주의"],"d":"헌법에 따라 국가 기관을 구성하고 국가를 운영해야 한다는 원리.","od":"헌법에 따라 국가 기관을 구성하고 국가를 운영해야 한다는 원리.","u":"사회① 9단원","ut":"정치 생활과 민주주의","p":174},{"t":"권력 분립의 원리","a":[],"d":"국가 권력을 독립된 여러 기관이 나누어 맡고 서로 견제하도록 하는 원리.","od":"국가 권력을 독립된 여러 기관이 나누어 맡고 서로 견제하도록 하는 원리.","u":"사회① 9단원","ut":"정치 생활과 민주주의","p":174},{"t":"의원 내각제","a":[],"d":"입법부와 행정부가 긴밀히 연결되어 국정을 운영하는 정부 형태.","od":"입법부와 행정부가 긴밀히 연결되어 국정을 운영하는 정부 형태.","u":"사회① 9단원","ut":"정치 생활과 민주주의","p":177},{"t":"대통령제","a":[],"d":"입법부와 행정부를 엄격히 나누어 서로 견제와 균형을 이루도록 하는 정부 형태.","od":"입법부와 행정부를 엄격히 나누어 서로 견제와 균형을 이루도록 하는 정부 형태.","u":"사회① 9단원","ut":"정치 생활과 민주주의","p":177}],[{"t":"정당","a":[],"d":"정치에 관한 의견이나 입장이 같은 사람들이 모여, 국민의 지지를 바탕으로 정치권력을 얻으려고 만든 단체.","od":"정치에 관한 의견이나 입장이 같은 사람들이 모여, 국민의 지지를 바탕으로 정치권력을 얻으려고 만든 단체.","u":"사회① 10단원","ut":"정치 과정과 시민 참여","p":186},{"t":"이익 집단","a":[],"d":"이해관계를 같이하는 사람들이 자신의 특수한 이익을 실현할 목적으로 만든 단체.","od":"이해관계를 같이하는 사람들이 자신의 특수한 이익을 실현할 목적으로 만든 단체.","u":"사회① 10단원","ut":"정치 과정과 시민 참여","p":187},{"t":"시민 단체","a":[],"d":"사회 문제를 해결하고 공동체의 가치를 지켜 나가기 위해 시민들이 자발적으로 만든 단체.","od":"사회 문제를 해결하고 공동체의 가치를 지켜 나가기 위해 시민들이 자발적으로 만든 단체.","u":"사회① 10단원","ut":"정치 과정과 시민 참여","p":187},{"t":"선거","a":[],"d":"특정한 임무나 직책을 수행할 대표를 정해진 규칙에 따라 선출하는 과정.","od":"특정한 임무나 직책을 수행할 대표를 정해진 규칙에 따라 선출하는 과정.","u":"사회① 10단원","ut":"정치 과정과 시민 참여","p":191},{"t":"보통 선거","a":[],"d":"일정 나이 이상의 모든 국민에게 선거권을 부여해야 한다는 원칙.","od":"일정 나이 이상의 모든 국민에게 선거권을 부여해야 한다는 원칙.","u":"사회① 10단원","ut":"정치 과정과 시민 참여","p":191},{"t":"평등 선거","a":[],"d":"유권자가 가지는 투표권의 수와 가치가 같아야 한다는 원칙.","od":"유권자가 가지는 투표권의 수와 가치가 같아야 한다는 원칙.","u":"사회① 10단원","ut":"정치 과정과 시민 참여","p":191},{"t":"직접 선거","a":[],"d":"유권자가 대리인을 거치지 않고 대표자를 직접 선택하는 원칙.","od":"유권자가 대리인을 거치지 않고 대표자를 직접 선택하는 원칙.","u":"사회① 10단원","ut":"정치 과정과 시민 참여","p":191},{"t":"비밀 선거","a":[],"d":"유권자가 선택한 후보자를 다른 사람이 알 수 없도록 하는 원칙.","od":"유권자가 선택한 후보자를 다른 사람이 알 수 없도록 하는 원칙.","u":"사회① 10단원","ut":"정치 과정과 시민 참여","p":191}],[{"t":"법","a":[],"d":"사회 질서를 유지하고 정의를 실현하기 위해 국가가 만든 사회 규범.","od":"사회 질서를 유지하고 정의를 실현하기 위해 국가가 만든 사회 규범.","u":"사회① 11단원","ut":"일상생활과 법","p":203},{"t":"법의 강제성","a":[],"d":"법을 어기면 국가가 제재하여 법을 지키도록 하는 성격.","od":"법을 어기면 국가가 제재하여 법을 지키도록 하는 성격.","u":"사회① 11단원","ut":"일상생활과 법","p":203},{"t":"공법","a":[],"d":"개인과 국가 또는 국가 기관 사이의 공적인 관계를 규율하는 법.","od":"개인과 국가 또는 국가 기관 사이의 공적인 관계를 규율하는 법.","u":"사회① 11단원","ut":"일상생활과 법","p":207},{"t":"사법(私法)","a":["사법"],"d":"개인과 개인 사이의 재산·가족생활 등 사적인 관계를 규율하는 법.","od":"개인과 개인 사이의 재산·가족생활 등 사적인 관계를 규율하는 법.","u":"사회① 11단원","ut":"일상생활과 법","p":207},{"t":"사회법","a":[],"d":"사회적 약자를 보호하고 인간다운 생활을 보장하려고 개인 간 관계에 국가가 개입하는 법.","od":"사회적 약자를 보호하고 인간다운 생활을 보장하려고 개인 간 관계에 국가가 개입하는 법.","u":"사회① 11단원","ut":"일상생활과 법","p":208},{"t":"재판","a":[],"d":"구체적인 분쟁에 대하여 법원이 절차를 거쳐 법을 적용하고 판단하는 과정.","od":"구체적인 분쟁에 대하여 법원이 절차를 거쳐 법을 적용하고 판단하는 과정.","u":"사회① 11단원","ut":"일상생활과 법","p":211},{"t":"민사 재판","a":[],"d":"개인과 개인 사이의 법률관계에 관한 다툼을 해결하는 재판.","od":"개인과 개인 사이의 법률관계에 관한 다툼을 해결하는 재판.","u":"사회① 11단원","ut":"일상생활과 법","p":211},{"t":"형사 재판","a":[],"d":"범죄 혐의를 받는 사람의 유죄 여부와 유죄일 때의 처벌을 판단하는 재판.","od":"범죄 혐의를 받는 사람의 유죄 여부와 유죄일 때의 처벌을 판단하는 재판.","u":"사회① 11단원","ut":"일상생활과 법","p":211},{"t":"검사","a":[],"d":"범죄 사실을 수사하고, 피고인의 처벌을 요구하는 사람.","od":"범죄 사실을 수사하고, 피고인의 처벌을 요구하는 사람.","u":"사회① 11단원","ut":"일상생활과 법","p":213},{"t":"공개 재판주의","a":[],"d":"재판의 심리와 판결을 원칙적으로 공개하여 공정성을 확보하려는 원칙.","od":"재판의 심리와 판결을 원칙적으로 공개하여 공정성을 확보하려는 원칙.","u":"사회① 11단원","ut":"일상생활과 법","p":214},{"t":"증거 재판주의","a":[],"d":"주장을 뒷받침하고 범죄 사실을 확인할 증거에 근거하여 재판해야 한다는 원칙.","od":"주장을 뒷받침하고 범죄 사실을 확인할 증거에 근거하여 재판해야 한다는 원칙.","u":"사회① 11단원","ut":"일상생활과 법","p":214},{"t":"심급 제도","a":[],"d":"재판 결과에 이의가 있을 때 상급 법원에서 다시 판단받을 수 있게 하는 제도.","od":"재판 결과에 이의가 있을 때 상급 법원에서 다시 판단받을 수 있게 하는 제도.","u":"사회① 11단원","ut":"일상생활과 법","p":215},{"t":"항소","a":[],"d":"1심 법원의 판결에 불복하여 상급 법원에 재판을 청구하는 것.","od":"1심 법원의 판결에 불복하여 상급 법원에 재판을 청구하는 것.","u":"사회① 11단원","ut":"일상생활과 법","p":215},{"t":"상고","a":[],"d":"2심 법원의 판결에 불복하여 대법원에 재판을 청구하는 것.","od":"2심 법원의 판결에 불복하여 대법원에 재판을 청구하는 것.","u":"사회① 11단원","ut":"일상생활과 법","p":215}],[{"t":"인권","a":[],"d":"사람이라면 누구나 태어날 때부터 가지며 존중받아야 하는 기본적인 권리.","od":"사람이라면 누구나 태어날 때부터 가지며 존중받아야 하는 기본적인 권리.","u":"사회② 1단원","ut":"인권과 헌법","p":11},{"t":"헌법","a":[],"d":"국민의 기본권과 국가 기관의 조직·운영 원칙을 정한 나라의 최고 법.","od":"국민의 기본권과 국가 기관의 조직·운영 원칙을 정한 나라의 최고 법.","u":"사회② 1단원","ut":"인권과 헌법","p":12},{"t":"기본권","a":[],"d":"헌법이 보장하는 기본적인 인권.","od":"헌법이 보장하는 기본적인 인권.","u":"사회② 1단원","ut":"인권과 헌법","p":12},{"t":"행복 추구권","a":["행복추구권"],"d":"모든 사람이 자신의 생각과 결정에 기초하여 삶을 책임지는 존엄한 존재로서 누리도록 헌법 제10조가 보장하는 권리.","od":"모든 사람이 자신의 생각과 결정에 기초하여 삶을 책임지는 존엄한 존재로서 누리도록 헌법 제10조가 보장하는 권리.","u":"사회② 1단원","ut":"인권과 헌법","p":12},{"t":"자유권","a":[],"d":"국가 권력이 부당하게 간섭하지 못하도록 하여 자유로운 생활을 보장하는 권리.","od":"국가 권력이 부당하게 간섭하지 못하도록 하여 자유로운 생활을 보장하는 권리.","u":"사회② 1단원","ut":"인권과 헌법","p":13},{"t":"평등권","a":[],"d":"성별·종교·사회적 신분 등을 이유로 부당한 차별을 받지 않을 권리.","od":"성별·종교·사회적 신분 등을 이유로 부당한 차별을 받지 않을 권리.","u":"사회② 1단원","ut":"인권과 헌법","p":13},{"t":"참정권","a":[],"d":"대표를 뽑거나 공직을 맡는 등 국가의 정치적 의사 결정에 참여할 권리.","od":"대표를 뽑거나 공직을 맡는 등 국가의 정치적 의사 결정에 참여할 권리.","u":"사회② 1단원","ut":"인권과 헌법","p":13},{"t":"사회권","a":[],"d":"국가에 인간다운 생활을 보장해 달라고 요구할 수 있는 권리.","od":"국가에 인간다운 생활을 보장해 달라고 요구할 수 있는 권리.","u":"사회② 1단원","ut":"인권과 헌법","p":13},{"t":"청구권","a":[],"d":"기본권이 침해되거나 침해될 우려가 있을 때 국가에 일정한 행위를 요구할 수 있는 권리.","od":"기본권이 침해되거나 침해될 우려가 있을 때 국가에 일정한 행위를 요구할 수 있는 권리.","u":"사회② 1단원","ut":"인권과 헌법","p":13}],[{"t":"입법","a":[],"d":"국가가 법률을 만들거나 고치는 작용.","od":"국가가 법률을 만들거나 고치는 작용.","u":"사회② 2단원","ut":"헌법과 국가 기관","p":29},{"t":"국회","a":[],"d":"국민이 뽑은 대표들이 법률을 만들고 국가의 중요한 의사를 결정하는 기관.","od":"국민이 뽑은 대표들이 법률을 만들고 국가의 중요한 의사를 결정하는 기관.","u":"사회② 2단원","ut":"헌법과 국가 기관","p":29},{"t":"상임 위원회","a":[],"d":"국회의 안건을 전문 분야별로 나누어 본회의에 앞서 심사하는 조직.","od":"국회의 안건을 전문 분야별로 나누어 본회의에 앞서 심사하는 조직.","u":"사회② 2단원","ut":"헌법과 국가 기관","p":29},{"t":"국정 감사","a":[],"d":"국회가 매년 정기적으로 국정 전반을 살펴 잘못된 부분을 찾아내어 바로잡도록 하는 것.","od":"국회가 매년 정기적으로 국정 전반을 살펴 잘못된 부분을 찾아내어 바로잡도록 하는 것.","u":"사회② 2단원","ut":"헌법과 국가 기관","p":30},{"t":"행정","a":[],"d":"법률을 집행하고 공익을 위한 정책을 세워 실행하는 국가 작용.","od":"법률을 집행하고 공익을 위한 정책을 세워 실행하는 국가 작용.","u":"사회② 2단원","ut":"헌법과 국가 기관","p":33},{"t":"행정부","a":[],"d":"법률 집행과 정책의 수립·실행 등 행정을 담당하는 국가 기관.","od":"법률 집행과 정책의 수립·실행 등 행정을 담당하는 국가 기관.","u":"사회② 2단원","ut":"헌법과 국가 기관","p":33},{"t":"국무 회의","a":[],"d":"정부의 중요한 정책을 심의하는 행정부의 최고 심의 기관.","od":"정부의 중요한 정책을 심의하는 행정부의 최고 심의 기관.","u":"사회② 2단원","ut":"헌법과 국가 기관","p":33},{"t":"감사원","a":[],"d":"조직상 대통령에 소속되어 있지만 업무상 독립된 행정부 기관으로, 국민이 낸 세금이 제대로 쓰이는지 조사하고 행정 기관과 공무원의 직무를 살피는 기관.","od":"조직상 대통령에 소속되어 있지만 업무상 독립된 행정부 기관으로, 국민이 낸 세금이 제대로 쓰이는지 조사하고 행정 기관과 공무원의 직무를 살피는 기관.","u":"사회② 2단원","ut":"헌법과 국가 기관","p":33},{"t":"국가 원수","a":[],"d":"외국에 대하여 나라를 대표하는 최고 지도자로서 대통령이 가지는 지위.","od":"외국에 대하여 나라를 대표하는 최고 지도자로서 대통령이 가지는 지위.","u":"사회② 2단원","ut":"헌법과 국가 기관","p":34},{"t":"행정부 수반","a":[],"d":"행정부 전체를 지휘·감독하고 행정에 최종 책임을 지는 대통령의 지위.","od":"행정부 전체를 지휘·감독하고 행정에 최종 책임을 지는 대통령의 지위.","u":"사회② 2단원","ut":"헌법과 국가 기관","p":34},{"t":"사법(司法)","a":["사법"],"d":"구체적인 분쟁이나 법 위반 사건에 법을 적용하여 판단하는 국가 작용.","od":"구체적인 분쟁이나 법 위반 사건에 법을 적용하여 판단하는 국가 작용.","u":"사회② 2단원","ut":"헌법과 국가 기관","p":37},{"t":"법원","a":[],"d":"재판을 통해 법적 분쟁을 해결하고 국민의 권리를 보호하는 국가 기관.","od":"재판을 통해 법적 분쟁을 해결하고 국민의 권리를 보호하는 국가 기관.","u":"사회② 2단원","ut":"헌법과 국가 기관","p":37},{"t":"사법부의 독립","a":[],"d":"법원과 법관이 다른 국가 권력의 부당한 간섭 없이 재판하는 원칙.","od":"법원과 법관이 다른 국가 권력의 부당한 간섭 없이 재판하는 원칙.","u":"사회② 2단원","ut":"헌법과 국가 기관","p":37},{"t":"대법원","a":[],"d":"최고 법원으로, 2심 판결에 불복하여 상고한 사건을 재판하며 모든 사건의 최종적인 재판을 담당하는 법원.","od":"최고 법원으로, 2심 판결에 불복하여 상고한 사건을 재판하며 모든 사건의 최종적인 재판을 담당하는 법원.","u":"사회② 2단원","ut":"헌법과 국가 기관","p":38},{"t":"헌법재판소","a":[],"d":"헌법 재판을 통해 헌법 질서를 지키고 기본권을 보장하는 국가 기관.","od":"헌법 재판을 통해 헌법 질서를 지키고 기본권을 보장하는 국가 기관.","u":"사회② 2단원","ut":"헌법과 국가 기관","p":39},{"t":"위헌 법률 심판","a":[],"d":"법원의 제청에 따라 재판의 전제가 된 법률이 헌법에 어긋나는지 판단하는 심판.","od":"법원의 제청에 따라 재판의 전제가 된 법률이 헌법에 어긋나는지 판단하는 심판.","u":"사회② 2단원","ut":"헌법과 국가 기관","p":39},{"t":"헌법 소원 심판","a":[],"d":"공권력 때문에 기본권을 침해당한 국민의 청구를 받아 위헌 여부를 판단하는 심판.","od":"공권력 때문에 기본권을 침해당한 국민의 청구를 받아 위헌 여부를 판단하는 심판.","u":"사회② 2단원","ut":"헌법과 국가 기관","p":39},{"t":"탄핵 심판","a":[],"d":"국회가 대통령, 장관, 법관 등 법률이 정한 공무원의 탄핵을 의결했을 때, 그 정당성을 심판하는 것.","od":"국회가 대통령, 장관, 법관 등 법률이 정한 공무원의 탄핵을 의결했을 때, 그 정당성을 심판하는 것.","u":"사회② 2단원","ut":"헌법과 국가 기관","p":39},{"t":"권한 쟁의 심판","a":[],"d":"국가 기관 사이에 권한의 다툼이 발생했을 때, 이를 심판하는 것.","od":"국가 기관 사이에 권한의 다툼이 발생했을 때, 이를 심판하는 것.","u":"사회② 2단원","ut":"헌법과 국가 기관","p":39},{"t":"정당 해산 심판","a":[],"d":"정부가 목적이나 활동이 민주적 기본 질서에 어긋나는 정당의 해산을 청구했을 때, 해산 여부를 심판하는 것.","od":"정부가 목적이나 활동이 민주적 기본 질서에 어긋나는 정당의 해산을 청구했을 때, 해산 여부를 심판하는 것.","u":"사회② 2단원","ut":"헌법과 국가 기관","p":39},{"t":"법률안 거부권","a":[],"d":"국회에서 의결된 법률안에 이의가 있을 때, 대통령이 이의서를 붙여 국회로 돌려보내고 다시 의결해 달라고 요구할 수 있는 권한(헌법 제53조).","od":"국회에서 의결된 법률안에 이의가 있을 때, 대통령이 이의서를 붙여 국회로 돌려보내고 다시 의결해 달라고 요구할 수 있는 권한(헌법 제53조).","u":"사회② 2단원","ut":"헌법과 국가 기관","p":232}],[{"t":"생산","a":[],"d":"필요한 재화와 서비스를 만들거나 그 가치를 높이는 활동.","od":"필요한 재화와 서비스를 만들거나 그 가치를 높이는 활동.","u":"사회② 3단원","ut":"경제생활과 선택","p":47},{"t":"분배","a":[],"d":"생산에 참여한 대가로 임금·지대·이자 등의 소득을 받는 활동.","od":"생산에 참여한 대가로 임금·지대·이자 등의 소득을 받는 활동.","u":"사회② 3단원","ut":"경제생활과 선택","p":47},{"t":"소비","a":[],"d":"재화나 서비스를 구입하여 사용하는 활동.","od":"재화나 서비스를 구입하여 사용하는 활동.","u":"사회② 3단원","ut":"경제생활과 선택","p":47},{"t":"재화","a":[],"d":"인간의 필요와 욕구를 충족해 주는 구체적인 형태가 있는 물건.","od":"인간의 필요와 욕구를 충족해 주는 구체적인 형태가 있는 물건.","u":"사회② 3단원","ut":"경제생활과 선택","p":47},{"t":"서비스","a":[],"d":"인간의 필요와 욕구를 충족해 주는 인간의 가치 있는 행위.","od":"인간의 필요와 욕구를 충족해 주는 인간의 가치 있는 행위.","u":"사회② 3단원","ut":"경제생활과 선택","p":47},{"t":"경제 주체","a":[],"d":"생산·분배·소비 등 경제 활동에 참여하는 개인이나 집단.","od":"생산·분배·소비 등 경제 활동에 참여하는 개인이나 집단.","u":"사회② 3단원","ut":"경제생활과 선택","p":47},{"t":"생산 요소","a":[],"d":"생산 활동에 참여한 사람들이 제공하는 노동, 토지, 자본 등으로, 그 대가로 임금, 지대, 이자를 받는다.","od":"생산 활동에 참여한 사람들이 제공하는 노동, 토지, 자본 등으로, 그 대가로 임금, 지대, 이자를 받는다.","u":"사회② 3단원","ut":"경제생활과 선택","p":47},{"t":"필요","a":[],"d":"인간의 생존을 위해 반드시 충족되어야 하는 것.","od":"인간의 생존을 위해 반드시 충족되어야 하는 것.","u":"사회② 3단원","ut":"경제생활과 선택","p":47},{"t":"욕구","a":[],"d":"인간의 생존을 위해 반드시 필요하지는 않지만, 보다 나은 삶을 위해 충족되기를 원하는 것.","od":"인간의 생존을 위해 반드시 필요하지는 않지만, 보다 나은 삶을 위해 충족되기를 원하는 것.","u":"사회② 3단원","ut":"경제생활과 선택","p":47},{"t":"희소성","a":["자원의 희소성"],"d":"인간의 욕구는 무한한 데 비해 이를 충족해 줄 자원의 양이 상대적으로 부족한 현상.","od":"인간의 욕구는 무한한 데 비해 이를 충족해 줄 자원의 양이 상대적으로 부족한 현상.","u":"사회② 3단원","ut":"경제생활과 선택","p":48},{"t":"기회비용","a":[],"d":"어떤 대안을 선택하면서 포기한 다른 대안들의 가치 중 가장 큰 것.","od":"어떤 대안을 선택하면서 포기한 다른 대안들의 가치 중 가장 큰 것.","u":"사회② 3단원","ut":"경제생활과 선택","p":49},{"t":"합리적 선택","a":[],"d":"각 대안의 비용과 편익을 비교하여 가장 유리한 대안을 고르는 것.","od":"각 대안의 비용과 편익을 비교하여 가장 유리한 대안을 고르는 것.","u":"사회② 3단원","ut":"경제생활과 선택","p":49},{"t":"경제 체제","a":[],"d":"한 사회의 경제 문제를 해결하기 위해 희소한 자원을 어떻게 사용하고 분배할 것인지를 결정하는 방식.","od":"한 사회의 경제 문제를 해결하기 위해 희소한 자원을 어떻게 사용하고 분배할 것인지를 결정하는 방식.","u":"사회② 3단원","ut":"경제생활과 선택","p":50},{"t":"경제 문제","a":[],"d":"무엇을 얼마나, 어떻게 생산하고 생산물을 누구에게 분배할 것인지처럼 경제 활동 과정에서 발생하는 선택의 문제.","od":"무엇을 얼마나, 어떻게 생산하고 생산물을 누구에게 분배할 것인지처럼 경제 활동 과정에서 발생하는 선택의 문제.","u":"사회② 3단원","ut":"경제생활과 선택","p":50},{"t":"시장 경제 체제","a":[],"d":"자신의 이익을 추구하는 개인과 기업이 시장 가격에 기초하여 자유롭게 의사 결정을 함으로써 경제 문제를 해결하는 체제.","od":"자신의 이익을 추구하는 개인과 기업이 시장 가격에 기초하여 자유롭게 의사 결정을 함으로써 경제 문제를 해결하는 체제.","u":"사회② 3단원","ut":"경제생활과 선택","p":50},{"t":"계획 경제 체제","a":[],"d":"국가가 경제 활동에 대한 계획을 세우고 개인과 기업에 명령함으로써 경제 문제를 해결하는 체제.","od":"국가가 경제 활동에 대한 계획을 세우고 개인과 기업에 명령함으로써 경제 문제를 해결하는 체제.","u":"사회② 3단원","ut":"경제생활과 선택","p":50},{"t":"기업","a":[],"d":"생산 요소를 이용하여 재화나 서비스를 생산하고 판매하는 경제 주체.","od":"생산 요소를 이용하여 재화나 서비스를 생산하고 판매하는 경제 주체.","u":"사회② 3단원","ut":"경제생활과 선택","p":53}],[{"t":"시장","a":[],"d":"재화·서비스나 생산 요소를 사고파는 사람들이 만나 거래하는 과정과 공간.","od":"재화·서비스나 생산 요소를 사고파는 사람들이 만나 거래하는 과정과 공간.","u":"사회② 4단원","ut":"시장 경제와 가격","p":67},{"t":"생산물 시장","a":[],"d":"생활에 필요한 재화와 서비스가 거래되는 시장.","od":"생활에 필요한 재화와 서비스가 거래되는 시장.","u":"사회② 4단원","ut":"시장 경제와 가격","p":68},{"t":"생산 요소 시장","a":[],"d":"생산에 필요한 노동·토지·자본 등이 거래되는 시장.","od":"생산에 필요한 노동·토지·자본 등이 거래되는 시장.","u":"사회② 4단원","ut":"시장 경제와 가격","p":68},{"t":"수요","a":[],"d":"구매 능력이 있는 사람이 일정한 가격에 상품을 사려는 욕구.","od":"구매 능력이 있는 사람이 일정한 가격에 상품을 사려는 욕구.","u":"사회② 4단원","ut":"시장 경제와 가격","p":71},{"t":"공급","a":[],"d":"판매 능력이 있는 사람이 일정한 가격에 상품을 팔려는 욕구.","od":"판매 능력이 있는 사람이 일정한 가격에 상품을 팔려는 욕구.","u":"사회② 4단원","ut":"시장 경제와 가격","p":71},{"t":"수요 법칙","a":[],"d":"다른 조건이 같을 때 가격이 오르면 수요량이 줄고, 가격이 내리면 수요량이 늘어나는 관계.","od":"다른 조건이 같을 때 가격이 오르면 수요량이 줄고, 가격이 내리면 수요량이 늘어나는 관계.","u":"사회② 4단원","ut":"시장 경제와 가격","p":71},{"t":"공급 법칙","a":[],"d":"다른 조건이 같을 때 가격이 오르면 공급량이 늘고, 가격이 내리면 공급량이 줄어드는 관계.","od":"다른 조건이 같을 때 가격이 오르면 공급량이 늘고, 가격이 내리면 공급량이 줄어드는 관계.","u":"사회② 4단원","ut":"시장 경제와 가격","p":71},{"t":"균형 가격","a":[],"d":"시장에서 수요량과 공급량이 같아지는 가격.","od":"시장에서 수요량과 공급량이 같아지는 가격.","u":"사회② 4단원","ut":"시장 경제와 가격","p":72},{"t":"초과 수요","a":[],"d":"어떤 가격에서 수요량이 공급량보다 많은 상태.","od":"어떤 가격에서 수요량이 공급량보다 많은 상태.","u":"사회② 4단원","ut":"시장 경제와 가격","p":72},{"t":"초과 공급","a":[],"d":"어떤 가격에서 공급량이 수요량보다 많은 상태.","od":"어떤 가격에서 공급량이 수요량보다 많은 상태.","u":"사회② 4단원","ut":"시장 경제와 가격","p":72},{"t":"대체재","a":[],"d":"쓰임이 비슷하여 서로 대신 사용할 수 있는 재화.","od":"쓰임이 비슷하여 서로 대신 사용할 수 있는 재화.","u":"사회② 4단원","ut":"시장 경제와 가격","p":75},{"t":"보완재","a":[],"d":"함께 소비할 때 만족이 커지는 재화.","od":"함께 소비할 때 만족이 커지는 재화.","u":"사회② 4단원","ut":"시장 경제와 가격","p":75}],[{"t":"국내 총생산","a":["GDP"],"d":"일정 기간 동안 한 나라 안에서 새롭게 생산된 최종 생산물의 가치를 시장 가격으로 환산한 것.","od":"일정 기간 동안 한 나라 안에서 새롭게 생산된 최종 생산물의 가치를 시장 가격으로 환산한 것.","u":"사회② 5단원","ut":"국민 경제와 국제 거래","p":85},{"t":"1인당 국내 총생산","a":[],"d":"국내 총생산을 그 나라의 인구수로 나눈 것으로, 한 나라 국민의 평균적인 소득 수준을 알 수 있다.","od":"국내 총생산을 그 나라의 인구수로 나눈 것으로, 한 나라 국민의 평균적인 소득 수준을 알 수 있다.","u":"사회② 5단원","ut":"국민 경제와 국제 거래","p":85},{"t":"국민 경제 지표","a":["경제 지표"],"d":"국민 소득, 경제 성장률, 물가 상승률, 실업률 등과 같이 한 나라의 경제 현상을 통계 수치로 표현한 것.","od":"국민 소득, 경제 성장률, 물가 상승률, 실업률 등과 같이 한 나라의 경제 현상을 통계 수치로 표현한 것.","u":"사회② 5단원","ut":"국민 경제와 국제 거래","p":85},{"t":"경제 성장","a":[],"d":"한 나라 경제의 생산 능력이 커져 재화와 서비스의 총 생산량이 늘어나는 것.","od":"한 나라 경제의 생산 능력이 커져 재화와 서비스의 총 생산량이 늘어나는 것.","u":"사회② 5단원","ut":"국민 경제와 국제 거래","p":86},{"t":"경제 성장률","a":[],"d":"경제 성장 정도를 나타내는 것으로, 물가의 변동을 제거한 실질 국내 총생산의 증가율로 측정한다.","od":"경제 성장 정도를 나타내는 것으로, 물가의 변동을 제거한 실질 국내 총생산의 증가율로 측정한다.","u":"사회② 5단원","ut":"국민 경제와 국제 거래","p":86},{"t":"물가","a":[],"d":"시장에서 거래되는 여러 상품의 가격을 종합하여 평균한 것.","od":"시장에서 거래되는 여러 상품의 가격을 종합하여 평균한 것.","u":"사회② 5단원","ut":"국민 경제와 국제 거래","p":89},{"t":"물가 지수","a":[],"d":"기준 시점의 물가를 100으로 했을 때, 비교 시점의 물가 수준을 나타낸 것.","od":"기준 시점의 물가를 100으로 했을 때, 비교 시점의 물가 수준을 나타낸 것.","u":"사회② 5단원","ut":"국민 경제와 국제 거래","p":89},{"t":"인플레이션","a":[],"d":"물가가 지속적으로 오르는 현상.","od":"물가가 지속적으로 오르는 현상.","u":"사회② 5단원","ut":"국민 경제와 국제 거래","p":90},{"t":"실업","a":[],"d":"일할 능력과 의사가 있는데도 일자리를 구하지 못하는 상태.","od":"일할 능력과 의사가 있는데도 일자리를 구하지 못하는 상태.","u":"사회② 5단원","ut":"국민 경제와 국제 거래","p":91},{"t":"경제 활동 인구","a":[],"d":"노동 가능 인구 가운데 일할 능력과 의사가 있는 사람들로, 취업자와 실업자로 구분한다.","od":"노동 가능 인구 가운데 일할 능력과 의사가 있는 사람들로, 취업자와 실업자로 구분한다.","u":"사회② 5단원","ut":"국민 경제와 국제 거래","p":91},{"t":"비경제 활동 인구","a":[],"d":"노동 가능 인구 가운데 경제 활동 인구가 아닌 사람들.","od":"노동 가능 인구 가운데 경제 활동 인구가 아닌 사람들.","u":"사회② 5단원","ut":"국민 경제와 국제 거래","p":91},{"t":"실업률","a":[],"d":"한 나라의 경제 활동 인구 중 실업자가 차지하는 비중.","od":"한 나라의 경제 활동 인구 중 실업자가 차지하는 비중.","u":"사회② 5단원","ut":"국민 경제와 국제 거래","p":91}],[{"t":"인구 밀도","a":[],"d":"1km²의 면적에 몇 명이 사는지 나타내는 값으로, 총인구를 면적으로 나누어 구한다.","od":"1km²의 면적에 몇 명이 사는지 나타내는 값으로, 총인구를 면적으로 나누어 구한다.","u":"사회② 7단원","ut":"인구 변화와 인구 문제","p":122},{"t":"배출 요인","a":[],"d":"낮은 임금·전쟁 등 사람들이 살던 지역을 떠나도록 하는 요인.","od":"낮은 임금·전쟁 등 사람들이 살던 지역을 떠나도록 하는 요인.","u":"사회② 7단원","ut":"인구 변화와 인구 문제","p":127},{"t":"흡인 요인","a":[],"d":"풍부한 일자리·좋은 생활 환경 등 사람들을 지역으로 끌어들이는 요인.","od":"풍부한 일자리·좋은 생활 환경 등 사람들을 지역으로 끌어들이는 요인.","u":"사회② 7단원","ut":"인구 변화와 인구 문제","p":127},{"t":"이촌 향도","a":[],"d":"촌락을 떠나 도시로 인구가 이동하는 현상.","od":"촌락을 떠나 도시로 인구가 이동하는 현상.","u":"사회② 7단원","ut":"인구 변화와 인구 문제","p":127},{"t":"역도시화","a":[],"d":"대도시의 인구가 더 쾌적한 환경 등을 찾아 촌락과 같은 비도시 지역으로 이동하는 현상.","od":"대도시의 인구가 더 쾌적한 환경 등을 찾아 촌락과 같은 비도시 지역으로 이동하는 현상.","u":"사회② 7단원","ut":"인구 변화와 인구 문제","p":127},{"t":"합계 출산율","a":[],"d":"여성 한 명이 평생 낳을 것으로 예상되는 평균 자녀 수로 나타낸 출산 수준.","od":"여성 한 명이 평생 낳을 것으로 예상되는 평균 자녀 수로 나타낸 출산 수준.","u":"사회② 7단원","ut":"인구 변화와 인구 문제","p":133},{"t":"저출산","a":[],"d":"출산 수준이 낮게 나타나는 현상.","od":"출산 수준이 낮게 나타나는 현상.","u":"사회② 7단원","ut":"인구 변화와 인구 문제","p":134},{"t":"고령화","a":[],"d":"전체 인구에서 노년층이 차지하는 비중이 커지는 현상.","od":"전체 인구에서 노년층이 차지하는 비중이 커지는 현상.","u":"사회② 7단원","ut":"인구 변화와 인구 문제","p":134},{"t":"인구 피라미드","a":[],"d":"특정 지역의 연령별 인구 구성과 남녀 비율을 알아보기 쉽게 나타낸 그래프.","od":"특정 지역의 연령별 인구 구성과 남녀 비율을 알아보기 쉽게 나타낸 그래프.","u":"사회② 7단원","ut":"인구 변화와 인구 문제","p":134},{"t":"중위 연령","a":[],"d":"총인구를 연령순으로 나열할 때 정중앙에 있는 사람의 연령.","od":"총인구를 연령순으로 나열할 때 정중앙에 있는 사람의 연령.","u":"사회② 7단원","ut":"인구 변화와 인구 문제","p":135}],[{"t":"세계 도시","a":[],"d":"세계 경제·문화·정치의 중심지로, 금융 기관과 다국적 기업 본사, 국제기구의 활동이 활발한 도시.","od":"세계 경제·문화·정치의 중심지로, 금융 기관과 다국적 기업 본사, 국제기구의 활동이 활발한 도시.","u":"사회② 8단원","ut":"사람이 만든 삶터, 도시","p":145},{"t":"도시 내부의 지역 분화","a":[],"d":"도시가 성장하면서 비슷한 기능끼리 모이고 서로 다른 기능이 나뉘는 현상.","od":"도시가 성장하면서 비슷한 기능끼리 모이고 서로 다른 기능이 나뉘는 현상.","u":"사회② 8단원","ut":"사람이 만든 삶터, 도시","p":147},{"t":"접근성","a":[],"d":"어느 한 장소에서 다른 장소까지 도달하기 쉬운 정도.","od":"어느 한 장소에서 다른 장소까지 도달하기 쉬운 정도.","u":"사회② 8단원","ut":"사람이 만든 삶터, 도시","p":147},{"t":"지대","a":[],"d":"건물이나 토지를 이용하여 얻을 수 있는 수익 또는 건물·토지를 빌린 대가로 지급하는 비용.","od":"건물이나 토지를 이용하여 얻을 수 있는 수익 또는 건물·토지를 빌린 대가로 지급하는 비용.","u":"사회② 8단원","ut":"사람이 만든 삶터, 도시","p":147},{"t":"집심 현상","a":[],"d":"중심 업무 기능이나 상업 기능이 도시 중심부로 집중되는 현상.","od":"중심 업무 기능이나 상업 기능이 도시 중심부로 집중되는 현상.","u":"사회② 8단원","ut":"사람이 만든 삶터, 도시","p":147},{"t":"이심 현상","a":[],"d":"주택이나 학교, 공장 등이 도시 외곽으로 빠져나가는 현상.","od":"주택이나 학교, 공장 등이 도시 외곽으로 빠져나가는 현상.","u":"사회② 8단원","ut":"사람이 만든 삶터, 도시","p":147},{"t":"도심","a":[],"d":"도시의 중심부에서 중심 업무와 전문 상업 기능이 집중되는 지역.","od":"도시의 중심부에서 중심 업무와 전문 상업 기능이 집중되는 지역.","u":"사회② 8단원","ut":"사람이 만든 삶터, 도시","p":148},{"t":"부도심","a":[],"d":"교통이 편리한 곳에서 도심의 상업·서비스 기능을 나누어 맡는 도시 내부의 중심지.","od":"교통이 편리한 곳에서 도심의 상업·서비스 기능을 나누어 맡는 도시 내부의 중심지.","u":"사회② 8단원","ut":"사람이 만든 삶터, 도시","p":148},{"t":"인구 공동화 현상","a":[],"d":"도심의 주거 기능이 약해져 낮에 비해 밤의 인구가 크게 줄어드는 현상.","od":"도심의 주거 기능이 약해져 낮에 비해 밤의 인구가 크게 줄어드는 현상.","u":"사회② 8단원","ut":"사람이 만든 삶터, 도시","p":148},{"t":"위성 도시","a":[],"d":"대도시 가까이에 위치하며 주거·공업·행정 등 대도시 기능의 일부를 나누어 맡는 도시.","od":"대도시 가까이에 위치하며 주거·공업·행정 등 대도시 기능의 일부를 나누어 맡는 도시.","u":"사회② 8단원","ut":"사람이 만든 삶터, 도시","p":148},{"t":"개발 제한 구역","a":[],"d":"도시의 무질서한 확산을 막고 녹지를 확보하려고 개발을 제한한 구역.","od":"도시의 무질서한 확산을 막고 녹지를 확보하려고 개발을 제한한 구역.","u":"사회② 8단원","ut":"사람이 만든 삶터, 도시","p":148},{"t":"도시화","a":[],"d":"전체 인구 중 도시 인구의 비율이 높아지고 도시적 생활 양식이 확산되는 과정.","od":"전체 인구 중 도시 인구의 비율이 높아지고 도시적 생활 양식이 확산되는 과정.","u":"사회② 8단원","ut":"사람이 만든 삶터, 도시","p":151},{"t":"도시 문제","a":[],"d":"도시의 성장과 인구 집중 등으로 나타나는 주택·교통·환경·기반 시설 등의 문제.","od":"도시의 성장과 인구 집중 등으로 나타나는 주택·교통·환경·기반 시설 등의 문제.","u":"사회② 8단원","ut":"사람이 만든 삶터, 도시","p":153}]];
+const NAMES = ["사회① 2단원", "사회① 8단원", "사회① 9단원", "사회① 10단원", "사회① 11단원", "사회② 1단원", "사회② 2단원", "사회② 3단원", "사회② 4단원", "사회② 5단원", "사회② 7단원", "사회② 8단원"];
+const SUBS = ["우리와 다른 기후, 다른 생활", "문화의 이해", "정치 생활과 민주주의", "정치 과정과 시민 참여", "일상생활과 법", "인권과 헌법", "헌법과 국가 기관", "경제생활과 선택", "시장 경제와 가격", "국민 경제와 국제 거래", "인구 변화와 인구 문제", "사람이 만든 삶터, 도시"];
+
+/* ===== 설정 ===== */
+const $ = id => document.getElementById(id);
+const store = {
+  get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+const saved = store.get("speedquiz-opts") || {};
+if(saved.time) $("optTime").value = saved.time;
+if(saved.total !== undefined) $("optTotal").value = saved.total;
+if(saved.unit !== undefined) $("optUnit").checked = saved.unit;
+if(saved.shuffle !== undefined) $("optShuffle").checked = saved.shuffle;
+if(saved.sound !== undefined) $("optSound").checked = saved.sound;
+function saveOpts(){
+  store.set("speedquiz-opts",{time:+$("optTime").value, total:+$("optTotal").value, unit:$("optUnit").checked, shuffle:$("optShuffle").checked, sound:$("optSound").checked});
+}
+["optTime","optTotal","optUnit","optShuffle","optSound"].forEach(id => $(id).addEventListener("change", saveOpts));
+
+/* ===== 소리 (인터넷 없이 브라우저에서 생성) ===== */
+let ac = null;
+function beep(freq, dur, vol){
+  if(!$("optSound").checked) return;
+  try{
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if(ac.state === "suspended") ac.resume();
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.frequency.value = freq; o.type = "sine";
+    g.gain.setValueAtTime(vol || .25, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, ac.currentTime + dur);
+    o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + dur);
+  }catch(e){}
+}
+const sndTick = () => beep(880, .12, .2);
+const sndOk   = () => { beep(660, .12); setTimeout(() => beep(990, .22), 110); };
+const sndEnd  = () => beep(220, .5, .3);
+
+/* ===== 화면 ===== */
+function show(id){ ["home","play","end","list"].forEach(s => $(s).hidden = s !== id); }
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+$("setBtns").innerHTML = SETS.map((s,i) => {
+  const units = new Set(s.map(c => c.u)).size;
+  return `<button data-set="${i}">${NAMES[i]}<small>${esc(SUBS[i])} · ${s.length}개</small></button>`;
+}).join("");
+$("setBtns").addEventListener("click", e => { const b = e.target.closest("button"); if(b) start(+b.dataset.set); });
+
+/* ===== 진행 상태 ===== */
+let G = null;   // {set, cards, i, ok, missed, phase, t0, left, paused}
+let raf = 0, timeoutId = 0;
+
+function start(setIdx){
+  beep(1, .01, .001); // 첫 터치에서 소리 허용
+  let cards = SETS[setIdx].slice();
+  if($("optShuffle").checked){ for(let i=cards.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [cards[i],cards[j]]=[cards[j],cards[i]]; } }
+  G = { set:setIdx, cards, i:0, ok:0, missed:[], turn:1, phase:"", left:0, limit:+$("optTime").value*1000, readyMs:0, paused:false };
+  $("setLabel").textContent = NAMES[setIdx];
+  $("qTotal").textContent = cards.length;
+  G.totalMs = +$("optTotal").value * 1000; G.totalLeft = G.totalMs; G.timeUp = false;
+  startTotal();
+  $("pauseLayer").hidden = true;
+  show("play");
+  ready();
+}
+
+function clearTimers(){ cancelAnimationFrame(raf); clearTimeout(timeoutId); }
+
+function header(){
+  $("qNo").textContent = G.i + 1;
+  $("who").innerHTML = `<b>${G.turn}</b>번째 학생`;
+  $("okCount").textContent = G.ok;
+}
+
+/* 다음 학생 준비 카운트다운 */
+function ready(){
+  clearTimers(); header();
+  setButtons(false);
+  if(G.readyMs <= 0){ ask(); return; }
+  G.phase = "ready"; G.left = G.readyMs; G.mark = performance.now();
+  $("timerBox").style.visibility = "visible";
+  $("timerBox").classList.remove("warn");
+  setBar(1, Math.round(G.limit/1000));
+  let lastShown = -1;
+  const step = () => {
+    if(G.paused) return;
+    const left = G.left - (performance.now() - G.mark);
+    const n = Math.ceil(left/1000);
+    if(n !== lastShown){
+      lastShown = n;
+      $("stage").innerHTML = `<div class="stamp">다음 학생 준비</div><div class="big">${Math.max(n,1)}</div>`;
+      if(n > 0) beep(520, .08, .15);
+    }
+    if(left <= 0){ ask(); return; }
+    raf = requestAnimationFrame(step);
+  };
+  raf = requestAnimationFrame(step);
+}
+
+/* 문제 제시 + 제한 시간 */
+function ask(){
+  clearTimers();
+  const c = G.cards[G.i];
+  G.phase = "ask"; G.left = G.limit; G.mark = performance.now();
+  $("timerBox").style.visibility = "visible";
+  $("stage").innerHTML = ($("optUnit").checked ? `<div class="unit">${esc(c.u)} · ${esc(c.ut)}</div>` : "") + `<div class="q">${esc(c.d)}</div>`;
+  setButtons(true);
+  let lastSec = -1;
+  const step = () => {
+    if(G.paused) return;
+    const left = G.left - (performance.now() - G.mark);
+    const s = Math.ceil(Math.max(left,0)/1000);
+    setBar(Math.max(left,0)/G.limit, s);
+    $("timerBox").classList.toggle("warn", left <= 3000);
+    if(s !== lastSec){ lastSec = s; if(s <= 3 && s > 0) sndTick(); }
+    if(left <= 0){ reveal("time"); return; }
+    raf = requestAnimationFrame(step);
+  };
+  raf = requestAnimationFrame(step);
+}
+
+function setBar(ratio, s){
+  $("barFill").style.transform = `scaleX(${ratio})`;
+  $("sec").textContent = s;
+}
+function setButtons(on){ $("okBtn").disabled = !on; $("passBtn").disabled = !on; $("okBtn").style.opacity = on?1:.4; $("passBtn").style.opacity = on?1:.4; }
+
+/* 결과 보여 주고 자동으로 다음 학생 */
+function reveal(kind){
+  if(!G || G.phase !== "ask") return;
+  clearTimers();
+  G.turn++;
+  if(kind === "time"){              // 시간 끝: 답은 보여 주지 않고, 같은 문제를 다음 학생이 10초 동안 도전
+    sndEnd(); header();
+    const w = $("who"); w.classList.remove("flash"); void w.offsetWidth; w.classList.add("flash");
+    ask(); return;
+  }
+  setButtons(false);
+  G.phase = "reveal";
+  $("timerBox").style.visibility = "hidden";
+  const c = G.cards[G.i];
+  if(kind === "ok"){ G.ok++; sndOk(); } else { G.missed.push(c); sndEnd(); }
+  $("okCount").textContent = G.ok;
+  if(kind === "ok" || kind === "pass"){ next(); return; }   // 정답·패스 모두 답을 보여 주지 않고 바로 다음 문제
+  const head = kind === "ok" ? `<div class="stamp ok">정답!</div>` : kind === "pass" ? `<div class="stamp bad">패스</div>` : `<div class="stamp bad">시간 끝!</div>`;
+  const alias = c.a && c.a.length ? `<div class="alias">(${esc(c.a.join(", "))})</div>` : "";
+  $("stage").innerHTML = head + `<div class="term">${esc(c.t)}</div>` + alias;
+  G.left = kind === "ok" ? 1600 : 2400; G.mark = performance.now();
+  waitThen(next);
+}
+
+/* 일시정지를 지키며 기다리기 */
+function waitThen(fn){
+  const step = () => {
+    if(G.paused) return;
+    if(G.left - (performance.now() - G.mark) <= 0){ fn(); return; }
+    raf = requestAnimationFrame(step);
+  };
+  raf = requestAnimationFrame(step);
+}
+
+function next(){
+  G.i++;
+  if(G.i >= G.cards.length){ finish(); return; }
+  ready();
+}
+
+function finish(){
+  clearTimers(); stopTotal(); G.phase = "end";
+  $("endTitle").textContent = G.timeUp ? `${NAMES[G.set]} · 시간 종료!` : `${NAMES[G.set]} 끝!`;
+  $("endScore").textContent = `${G.ok} / ${G.cards.length}`;
+  $("endSub").textContent = G.missed.length ? `다시 볼 개념 ${G.missed.length}개` : "모두 맞혔어요!";
+  $("review").innerHTML = G.missed.map(c => `<div><b>${esc(c.t)}</b>${esc(c.od)}</div>`).join("");
+  show("end");
+}
+
+/* ===== 전체 제한 시간 (기본 2분) ===== */
+let totalTimer = 0;
+const fmt = ms => { const t = Math.ceil(Math.max(ms,0)/1000); return `${Math.floor(t/60)}:${String(t%60).padStart(2,"0")}`; };
+function startTotal(){
+  stopTotal();
+  if(!G || !G.totalMs){ $("total").textContent = "전체 제한 없음"; $("total").classList.remove("warn"); return; }
+  G.totalMark = performance.now();
+  const tick = () => {
+    const left = G.totalLeft - (performance.now() - G.totalMark);
+    $("total").textContent = "전체 " + fmt(left);
+    $("total").classList.toggle("warn", left <= 10000);
+    if(left <= 0){ timeUp(); }
+  };
+  tick(); totalTimer = setInterval(tick, 200);
+}
+function stopTotal(){
+  if(totalTimer){ clearInterval(totalTimer); totalTimer = 0; if(G && G.totalMs) G.totalLeft -= performance.now() - G.totalMark; }
+}
+function timeUp(){
+  if(!G || G.phase === "end") return;
+  stopTotal(); G.totalLeft = 0; G.timeUp = true;
+  if(G.phase === "ask" && G.cards[G.i] && !G.missed.includes(G.cards[G.i])) G.missed.push(G.cards[G.i]);
+  sndEnd(); finish();
+}
+
+/* 일시정지 */
+function pause(){
+  if(!G || G.paused || !["ready","ask","reveal"].includes(G.phase)) return;
+  G.paused = true; clearTimers();
+  G.left = G.left - (performance.now() - G.mark);
+  stopTotal();
+  $("pauseLayer").hidden = false;
+}
+function resume(){
+  if(!G || !G.paused) return;
+  G.paused = false; $("pauseLayer").hidden = true;
+  G.mark = performance.now();
+  startTotal();
+  if(G.phase === "ask"){ resumeAsk(); }
+  else if(G.phase === "ready"){ const l=G.left; ready(); G.left = l; G.mark = performance.now(); }
+  else if(G.phase === "reveal"){ waitThen(next); }
+}
+function resumeAsk(){
+  let lastSec = -1;
+  const step = () => {
+    if(G.paused) return;
+    const left = G.left - (performance.now() - G.mark);
+    const s = Math.ceil(Math.max(left,0)/1000);
+    setBar(Math.max(left,0)/G.limit, s);
+    $("timerBox").classList.toggle("warn", left <= 3000);
+    if(s !== lastSec){ lastSec = s; if(s <= 3 && s > 0) sndTick(); }
+    if(left <= 0){ reveal("time"); return; }
+    raf = requestAnimationFrame(step);
+  };
+  raf = requestAnimationFrame(step);
+}
+
+/* ===== 버튼·키보드 ===== */
+$("okBtn").onclick = () => reveal("ok");
+$("passBtn").onclick = () => reveal("pass");
+$("pauseBtn").onclick = pause;
+$("resumeBtn").onclick = resume;
+$("quitBtn").onclick = () => { clearTimers(); stopTotal(); G = null; show("home"); };
+$("againBtn").onclick = () => start(G.set);
+$("homeBtn").onclick = () => { G = null; show("home"); };
+$("fsBtn").onclick = () => { const d=document.documentElement; (document.fullscreenElement ? document.exitFullscreen() : (d.requestFullscreen||d.webkitRequestFullscreen).call(d)).catch?.(()=>{}); };
+
+document.addEventListener("keydown", e => {
+  if(!G || $("play").hidden) return;
+  if(e.key === "Escape"){ e.preventDefault(); G.paused ? resume() : pause(); return; }
+  if(G.paused){ if(e.key === " " || e.key === "Enter"){ e.preventDefault(); resume(); } return; }
+  if(e.key === " " || e.key === "Enter"){ e.preventDefault(); reveal("ok"); }
+  else if(e.key === "p" || e.key === "P" || e.key === "ArrowRight"){ e.preventDefault(); reveal("pass"); }
+});
+/* 다른 창으로 가면 자동 일시정지 */
+document.addEventListener("visibilitychange", () => { if(document.hidden) pause(); });
+
+/* ===== 교사용 목록 ===== */
+$("listBtn").onclick = () => {
+  $("lgrid").innerHTML = SETS.map((s,i) => `<div class="lset"><h3>${NAMES[i]} · ${esc(SUBS[i])}</h3><ol>${s.map(c => `<li>${esc(c.t)}<span>${esc(c.p)}쪽</span></li>`).join("")}</ol></div>`).join("");
+  show("list");
+};
+$("listBack").onclick = () => show("home");
+$("printBtn").onclick = () => window.print();
+
+/* ===== 정답 리스트 내려받기 (엑셀에서 열리는 CSV, 인터넷 없이 동작) ===== */
+function downloadAnswers(){
+  const q = v => '"' + String(v ?? "").replace(/"/g,'""') + '"';
+  const rows = [["단원","번호","정답","다른 이름","쪽","설명"]];
+  SETS.forEach((s,i) => s.forEach((c,j) => rows.push([NAMES[i] + " " + SUBS[i], j+1, c.t, (c.a||[]).join(", "), c.p, c.od])));
+  const csv = "\ufeff" + rows.map(r => r.map(q).join(",")).join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8"}));
+  a.download = "사회개념_스피드퀴즈_단원연습_정답리스트.csv";
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+$("dlBtn").onclick = downloadAnswers;
+$("dlBtn2").onclick = downloadAnswers;
+
+show("home");
+</script>
+</body>
+</html>
