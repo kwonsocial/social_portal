@@ -52,7 +52,7 @@
   .btn.ghost:hover{color:var(--gold)}
 
   /* ===== 열람실 ===== */
-  .rooms{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;width:100%;max-width:900px;margin:0 auto;flex:1;align-items:stretch}
+  .rooms{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:22px;width:100%;max-width:1140px;margin:0 auto;flex:1;align-items:stretch}
   .room{position:relative;display:flex;flex-direction:column;justify-content:center;gap:10px;text-decoration:none;color:inherit;
         background:linear-gradient(180deg,rgba(18,33,54,.38) 0%,rgba(12,22,38,.78) 45%,rgba(10,20,35,.9) 100%);
         border:1px solid var(--line);border-radius:140px 140px 18px 18px;
@@ -70,6 +70,11 @@
   .room .tag{align-self:center;font-size:12px;font-weight:700;color:var(--gold);
         border:1px solid var(--line);padding:3px 10px;border-radius:999px}
   .room p{text-align:center;font-size:15px;line-height:1.6;color:var(--ink2)}
+  .room .acts{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+  .room .acts a{text-decoration:none;font-weight:800;font-size:15px;color:var(--gold);border:1px solid var(--gold2);border-radius:999px;
+        padding:9px 16px;background:rgba(234,208,156,.06);transition:border-color .2s, background .2s;white-space:nowrap}
+  .room .acts a:hover{border-color:var(--gold);background:rgba(234,208,156,.14)}
+  .room .acts a.lock{color:var(--ink2);border-color:rgba(201,211,224,.35)}
   .room .go{align-self:center;margin-top:12px;font-weight:800;font-size:15px;color:var(--gold);letter-spacing:.04em}
 
   /* 기록이 사라진 날: 여섯 기둥 */
@@ -113,6 +118,8 @@
 
   footer{position:relative;z-index:1;text-align:center;font-size:12px;color:var(--muted);padding:6px 0 max(14px,env(safe-area-inset-bottom))}
   footer a{color:var(--muted)}
+
+
 
   @media (max-width:700px){
     .rooms{grid-template-columns:1fr}
@@ -186,6 +193,7 @@
 /* ===== 설정: 주소·순서는 여기서만 바꾸면 됩니다 ===== */
 const ICONS = {
   scroll:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h11a2 2 0 0 1 2 2v1h-4M7 4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7M7 4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2M12 10h4M12 13h4M12 16h3"/></svg>',
+  timer:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2h4M12 2v3M18.5 6.5l1.5-1.5"/><circle cx="12" cy="14" r="8"/><path d="M12 14V9.5M12 14l3 2"/></svg>',
   pillar:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 21h18M5 18h14M6 18V8M10 18V8M14 18V8M18 18V8M4 8h16L12 3z"/></svg>'
 };
 
@@ -195,7 +203,12 @@ const LINKS = [
     url:"https://kwonsocial.github.io/social-archive-review/" },
   { no:"제2 열람실", icon:"pillar", tag:"전환기 활동 · 점수 없음",
     title:"기록이 사라진 날", desc:"영파 서고를 움직이며 여섯 기둥에 다시 불을 밝혀요.",
-    url:"https://kwonsocial.github.io/record-lost-day/", pillars:true }
+    url:"https://kwonsocial.github.io/record-lost-day/", pillars:true },
+  { no:"제3 열람실", icon:"timer", tag:"장원 학급 선발전",
+    title:"사회 개념 스피드 퀴즈", desc:"설명을 읽고 10초 안에 개념을 외쳐요.",
+    acts:[ { label:"단원 연습 →", url:"speed-practice.html" },
+           { label:"🔒 실전 · 교사용", url:"speed-quiz.html", lock:true } ] }
+  /* 새 열람실은 여기에 같은 모양으로 추가하면 됩니다. */
 ];
 
 /* 「기록이 사라진 날」 게임의 기둥 (게임 코드의 id·색과 같음) */
@@ -281,16 +294,23 @@ function pillarsHTML(){
 }
 
 function renderRooms(){
-  $("rooms").innerHTML = LINKS.map(l => `
-    <a class="room" href="${l.url}">
+  $("rooms").innerHTML = LINKS.map(l => {
+    const inner = `
       <span class="no">${l.no}</span>
       <span class="mark">${ICONS[l.icon]}</span>
       <h2>${l.title}</h2>
       <span class="tag">${l.tag}</span>
       <p>${l.desc}</p>
-      ${l.pillars ? pillarsHTML() : ""}
+      ${l.pillars ? pillarsHTML() : ""}`;
+    if(l.acts) return `
+    <div class="room">${inner}
+      <div class="acts">${l.acts.map(a => `<a href="${a.url}"${a.lock ? ' class="lock"' : ""}>${a.label}</a>`).join("")}</div>
+    </div>`;
+    return `
+    <a class="room" href="${l.url}">${inner}
       <span class="go">들어가기 →</span>
-    </a>`).join("");
+    </a>`;
+  }).join("");
 }
 
 function renderId(){

@@ -97,6 +97,61 @@
     body{background:#fff;overflow:visible} .board{position:static;border:0;box-shadow:none;background:#fff}
     .screen:not(#list){display:none!important} #list{position:static;padding:0} #list .bar2{display:none}
   }
+
+  /* ===== 휴대폰·작은 화면 ===== */
+  button,.opt{touch-action:manipulation}
+  @media (pointer:coarse){ .keys{display:none} }
+  @media (max-width:700px), (max-height:520px){
+    .board{border-width:7px}
+    .screen{padding:12px 14px max(12px,env(safe-area-inset-bottom))}
+    #home{justify-content:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;gap:14px;padding-top:18px}
+    #home > *{flex:none}
+    #home h1{font-size:30px}
+    #home .sub{font-size:14px;line-height:1.5}
+    .sets{width:100%;gap:8px}
+    .sets button{padding:10px 6px;font-size:18px;border-radius:12px}
+    .sets button small{font-size:11px}
+    .homebar{gap:8px;font-size:14px;padding-bottom:8px}
+    .homebar button{padding:.5em .9em}
+    .opt{padding:.4em .7em}
+    .top{flex-wrap:wrap;justify-content:center;gap:6px 12px;font-size:14px}
+    .pill{padding:.15em .7em}
+    .stage{gap:12px;padding:0 4px}
+    .unit{font-size:13px}
+    .q{font-size:clamp(22px,6.2vw,34px);line-height:1.45}
+    .term{font-size:clamp(34px,10vw,56px)}
+    .alias{font-size:15px}
+    .stamp{font-size:22px}
+    .big{font-size:56px}
+    .timer{gap:10px}
+    .sec{font-size:40px}
+    .controls{gap:8px;padding-top:10px}
+    .controls button{font-size:18px;min-width:0;flex:1;padding:.7em .4em}
+    #pauseLayer h2{font-size:40px}
+    #pauseLayer .row{gap:10px;flex-wrap:wrap;justify-content:center}
+    #pauseLayer button{font-size:17px}
+    #end{gap:10px;overflow-y:auto}
+    #end > *{flex:none}
+    #end h2{font-size:26px}
+    .score{font-size:60px}
+    .review{width:100%;grid-template-columns:1fr;font-size:15px;flex:none;overflow:visible}
+    .endbtns{gap:8px;flex-wrap:wrap;justify-content:center}
+    .endbtns button{font-size:16px}
+    #list{padding:14px}
+    #list .bar2{flex-wrap:wrap}
+    .lgrid{grid-template-columns:1fr}
+  }
+  @media (max-width:700px) and (orientation:portrait){
+    .sets{grid-template-columns:repeat(2,minmax(0,1fr))}
+  }
+  @media (max-height:520px) and (orientation:landscape){
+    .sets{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .q{font-size:clamp(20px,3.4vw,30px)}
+    .stage{gap:6px}
+    .top{flex-wrap:nowrap;justify-content:space-between}
+    .controls button{flex:none;min-width:8em;padding:.45em 1em;font-size:16px}
+    .sec{font-size:32px}
+  }
 </style>
 </head>
 <body>
